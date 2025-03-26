@@ -1,22 +1,20 @@
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.responses import JSONResponse
 import PyPDF2
 import io
 
-app = Flask(__name__)
+app = FastAPI()
 
-@app.route('/split', methods=['POST'])
-def split_pdf():
-    # Ensure a file is provided
-    if 'file' not in request.files:
-        return jsonify({"error": "No file provided"}), 400
+@app.post("/split", summary="Split a PDF into individual pages.", operation_id="splitPdf")
+async def split_pdf(file: UploadFile = File(...)):
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Invalid file type. Only PDF files are accepted.")
 
-    file = request.files['file']
-    
     try:
-        # Read the PDF file
-        pdf_reader = PyPDF2.PdfFileReader(file)
+        file_contents = await file.read()
+        pdf_reader = PyPDF2.PdfFileReader(io.BytesIO(file_contents))
         num_pages = pdf_reader.getNumPages()
-        split_pages = []
+        pages = []
 
         for i in range(num_pages):
             pdf_writer = PyPDF2.PdfFileWriter()
@@ -24,17 +22,13 @@ def split_pdf():
             output = io.BytesIO()
             pdf_writer.write(output)
             output.seek(0)
-            # You might save the page to disk or cloud storage here,
-            # then return a URL or identifier instead of the raw bytes.
-            split_pages.append(f"Page {i+1} processed.")
+            # For now, we're just returning a confirmation message per page.
+            pages.append(f"Page {i+1} processed.")
 
-        return jsonify({
+        return JSONResponse(content={
             "message": f"PDF successfully split into {num_pages} pages.",
-            "pages": split_pages
-        }), 200
+            "pages": pages
+        })
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(debug=True)
+        raise HTTPException(status_code=500, detail=str(e))
