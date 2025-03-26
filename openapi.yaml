@@ -1,0 +1,41 @@
+openapi: 3.1.0
+info:
+  title: PDF Split API
+  version: 1.0.0
+  description: A simple API that accepts a PDF file and splits it into individual pages.
+servers:
+  - url: https://yourdomain.com  # Replace with your deployment domain
+paths:
+  /split:
+    post:
+      summary: Split a PDF into individual pages.
+      x-openai-isConsequential: false
+      description: >
+        Accepts a PDF file via multipart/form-data and splits it into single-page documents.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The PDF file to be split.
+      responses:
+        '200':
+          description: Successfully split PDF.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A confirmation message.
+                  pages:
+                    type: array
+                    items:
+                      type: string
+                    description: List of page identifiers or messages.
