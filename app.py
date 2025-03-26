@@ -1,7 +1,8 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import StreamingResponse
 from pypdf import PdfReader, PdfWriter
 import io
+import zipfile
 
 app = FastAPI()
 
@@ -11,24 +12,32 @@ async def split_pdf(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Invalid file type. Only PDF files are accepted.")
 
     try:
+        # Read the input PDF file
         file_contents = await file.read()
-        pdf_reader = PyPDF2.PdfFileReader(io.BytesIO(file_contents))
-        num_pages = pdf_reader.getNumPages()
-        pages = []
+        pdf_reader = PdfReader(io.BytesIO(file_contents))
+        num_pages = len(pdf_reader.pages)
 
-        for i in range(num_pages):
-            pdf_writer = PyPDF2.PdfFileWriter()
-            pdf_writer.addPage(pdf_reader.getPage(i))
-            output = io.BytesIO()
-            pdf_writer.write(output)
-            output.seek(0)
-            # For now, we're just returning a confirmation message per page.
-            pages.append(f"Page {i+1} processed.")
+        # Create an in-memory ZIP file
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for i in range(num_pages):
+                pdf_writer = PdfWriter()
+                pdf_writer.add_page(pdf_reader.pages[i])
+                pdf_buffer = io.BytesIO()
+                pdf_writer.write(pdf_buffer)
+                pdf_buffer.seek(0)
+                # Define a filename for this PDF page
+                filename = f"page_{i+1}.pdf"
+                # Add the PDF page to the ZIP file
+                zip_file.writestr(filename, pdf_buffer.getvalue())
 
-        return JSONResponse(content={
-            "message": f"PDF successfully split into {num_pages} pages.",
-            "pages": pages
-        })
+        zip_buffer.seek(0)
+        # Return the ZIP file as a StreamingResponse
+        return StreamingResponse(
+            zip_buffer,
+            media_type="application/x-zip-compressed",
+            headers={"Content-Disposition": "attachment; filename=split_pdf.zip"}
+        )
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
