@@ -4,7 +4,8 @@ import requests
 import os
 
 # Change this URL to your API endpoint. If running locally, for example, use "http://127.0.0.1:8000/split"
-API_URL = "https://pdf-split-api.render.com/split"
+API_URL = "https://pdf-split-api.onrender.com/split"
+#API_URL = "http://127.0.0.1:8000/split"
 
 def select_file():
     # Open a file dialog to select a PDF file.
