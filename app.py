@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
-import PyPDF2
+from pypdf import PdfReader, PdfWriter
 import io
 
 app = FastAPI()
