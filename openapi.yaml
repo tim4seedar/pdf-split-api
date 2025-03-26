@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: A simple API that accepts a PDF file and splits it into individual pages.
 servers:
-  - url: https://yourdomain.com  # Replace with your deployment domain
+  - url: https://github.com/tim4seedar/pdf-split-api # Replace with your deployment domain
 paths:
   /split:
     post:
