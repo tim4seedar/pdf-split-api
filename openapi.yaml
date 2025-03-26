@@ -8,6 +8,7 @@ servers:
 paths:
   /split:
     post:
+      operationId: splitPdf
       summary: Split a PDF into individual pages.
       x-openai-isConsequential: false
       description: >
